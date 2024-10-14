@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Platform, Text, View } from 'react-native';
+import { Image, StyleSheet, Platform, View, Button } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -7,11 +7,13 @@ import { ThemedView } from '@/components/ThemedView';
 import { Task, Food } from '@/database';
 import { useState, useEffect } from 'react';
 import FoodForm from '@/components/FoodForm';
+import { useQuery, useRealm } from '@realm/react';
 
 export default function HomeScreen() {
 
     const [tasks, setTasks] = useState<Realm.Results<Task> | null>(null); // State pour stocker les tâches
     const [foods, setFoods] = useState<Realm.Results<Food> | null>(null); // State pour stocker les tâches
+    const realm = new Realm({ schema: [Food] });
 
     // useEffect(() => {
     //   // Fonction pour initialiser et manipuler Realm
@@ -41,9 +43,6 @@ export default function HomeScreen() {
     // }, []);
 
     const fetchFoods = async () => {
-        const realm = await Realm.open({
-            schema: [Food],
-        });
         const Foods = realm.objects<Food>('Food');
         setFoods(Foods);
 
@@ -60,7 +59,14 @@ export default function HomeScreen() {
         await fetchFoods(); // Mettre à jour la liste des aliments
         console.log('Aliments mis à jour :', foods);
       };
-// Appelle la fonction pour test
+// DELETE
+  const deleteFood = (deletableFood: Food) => {
+    realm.write(() => {
+        realm.delete(deletableFood); // Supprime l'aliment
+    });
+    fetchFoods(); // Met à jour la liste après suppression
+  };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -88,9 +94,11 @@ export default function HomeScreen() {
       <ThemedView>
     {foods && foods.length > 0 ? (
         foods.map((food, id) => (
-          <View style={styles.food}>
-            <ThemedText key={id}>{food.name}, #{id}</ThemedText>
-            <Text >DElETE</Text>
+          <View style={styles.food}  key={id}>
+            <ThemedText>{food.name}, #{id}</ThemedText>
+            <Button onPress={() => deleteFood(food)} title={'delete'}>
+
+            </Button>
           </View>
         ))
     ) : (
