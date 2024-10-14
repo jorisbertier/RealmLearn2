@@ -1,11 +1,66 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Image, StyleSheet, Platform, Text, View } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { Task, Food } from '@/database';
+import { useState, useEffect } from 'react';
+import FoodForm from '@/components/FoodForm';
 
 export default function HomeScreen() {
+
+    const [tasks, setTasks] = useState<Realm.Results<Task> | null>(null); // State pour stocker les tâches
+    const [foods, setFoods] = useState<Realm.Results<Food> | null>(null); // State pour stocker les tâches
+
+    // useEffect(() => {
+    //   // Fonction pour initialiser et manipuler Realm
+    //   const initializeRealm = async () => {
+    //     const realm = await Realm.open({
+    //       schema: [Task], // Schéma de la base de données
+    //     });
+
+    //     // Ajouter un exemple de tâche si la base est vide
+    //     realm.write(() => {
+    //       if (realm.objects('Task').length === 0) {
+    //         realm.create('Task', {
+    //           _id: new Realm.BSON.ObjectId(),
+    //           name: 'Apprendre Realm',
+    //           completed: false,
+    //         });
+    //       }
+    //     });
+
+    //     // Lire les données
+    //     const tasksFromRealm = realm.objects<Task>('Task');
+    //     setTasks(tasksFromRealm); // Stocker les données dans le state
+    //   };
+
+    //   initializeRealm();
+
+    // }, []);
+
+    const fetchFoods = async () => {
+        const realm = await Realm.open({
+            schema: [Food],
+        });
+        const Foods = realm.objects<Food>('Food');
+        setFoods(Foods);
+
+        return Array.from(Foods);
+
+    };
+
+    useEffect(() => {
+        fetchFoods(); // Charger les aliments au montage du composant
+    }, []);
+
+    // Fonction pour être appelée après l'ajout d'un aliment
+    const handleFoodAdded = async () => {
+        await fetchFoods(); // Mettre à jour la liste des aliments
+        console.log('Aliments mis à jour :', foods);
+      };
+// Appelle la fonction pour test
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -30,22 +85,21 @@ export default function HomeScreen() {
           to open developer tools.
         </ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      <ThemedView>
+    {foods && foods.length > 0 ? (
+        foods.map((food, id) => (
+          <View style={styles.food}>
+            <ThemedText key={id}>{food.name}, #{id}</ThemedText>
+            <Text >DElETE</Text>
+          </View>
+        ))
+    ) : (
+        <ThemedText>Aucun aliment disponible.</ThemedText>
+    )}
+</ThemedView>
+      
+        <FoodForm onFoodAdded={handleFoodAdded}></FoodForm>
+      
     </ParallaxScrollView>
   );
 }
@@ -67,4 +121,9 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
   },
+  food : {
+    width: '100%',
+    justifyContent: 'space-between',
+    flexDirection: 'row'
+  }
 });
